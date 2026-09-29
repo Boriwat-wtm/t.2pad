@@ -16,7 +16,8 @@ MODEL_ID = "PaddlePaddle/PaddleOCR-VL-1.5"
 
 HELPER_DIR = ROOT / "ov_helper"
 PRETRAINED_DIR = ROOT / "models" / "PaddleOCR-VL-1.5"
-OV_DIR = ROOT / "models" / "ov_paddleocr_vl_1_5"
+OV_DIR = ROOT / "models" / "ov_paddleocr_vl_1_5"          # INT8 LLM (speed test)
+OV_DIR_FP = ROOT / "models" / "ov_paddleocr_vl_1_5_fp"    # uncompressed LLM (full pipeline)
 
 
 def main():
@@ -37,14 +38,16 @@ def main():
         shutil.copy2(target, backup)
     shutil.copy2(HELPER_DIR / "modeling_paddleocr_vl.py", target)
 
-    if (OV_DIR / "llm_stateful_int8.xml").exists():
-        print("[3/3] OpenVINO model already converted — skip")
-    else:
-        print("[3/3] convert to OpenVINO (fp + INT8 LLM, several minutes)")
-        sys.path.insert(0, str(HELPER_DIR))
+    sys.path.insert(0, str(HELPER_DIR))
+    # the converter writes llm_stateful.xml only when no compression is requested -> two separate exports
+    for out, int8, marker in [(OV_DIR, True, "llm_stateful_int8.xml"), (OV_DIR_FP, False, "llm_stateful.xml")]:
+        if (out / marker).exists():
+            print(f"[3/3] {out.name} already converted — skip")
+            continue
+        print(f"[3/3] convert to OpenVINO -> {out.name} ({'INT8' if int8 else 'uncompressed'} LLM, several minutes)")
         from ov_paddleocr_vl import PaddleOCR_VL_OV
-        conv = PaddleOCR_VL_OV(pretrained_model_path=str(PRETRAINED_DIR), ov_model_path=str(OV_DIR),
-                               device="CPU", llm_int4_compress=False, llm_int8_compress=True,
+        conv = PaddleOCR_VL_OV(pretrained_model_path=str(PRETRAINED_DIR), ov_model_path=str(out),
+                               device="CPU", llm_int4_compress=False, llm_int8_compress=int8,
                                vision_int8_quant=False)
         conv.export_paddleocr_vl_to_ov()
         conv.close()

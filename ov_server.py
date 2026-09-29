@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT / "ov_helper"))
-OV_DIR = ROOT / "models" / "ov_paddleocr_vl_1_5"
+OV_DIRS = {"int8": ROOT / "models" / "ov_paddleocr_vl_1_5", "fp": ROOT / "models" / "ov_paddleocr_vl_1_5_fp"}
 MODEL_NAME = "PaddleOCR-VL-1.5-0.9B"
 
 
@@ -38,7 +38,7 @@ def main():
     core = ov.Core()
     if args.device == "GPU":
         core.set_property("GPU", {"INFERENCE_PRECISION_HINT": args.precision})
-    model = OVPaddleOCRVLForCausalLM(core=core, ov_model_path=str(OV_DIR), device=args.device,
+    model = OVPaddleOCRVLForCausalLM(core=core, ov_model_path=str(OV_DIRS[args.llm]), device=args.device,
                                      llm_int4_compress=False, llm_int8_compress=(args.llm == "int8"),
                                      vision_int8_quant=False,
                                      llm_int8_quant=(args.llm == "int8" and args.device != "NPU"),
