@@ -7,3 +7,9 @@ _hf/
 results/
 __pycache__/
 *.pyc
+.venv-paddle/
+.venv-eval/
+OmniDocBench/
+omnidocbench_v1.6/
+pipeline_results/
+cfg_*.yaml

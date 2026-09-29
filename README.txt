@@ -38,3 +38,20 @@
   .venv\Scripts\python.exe run_test.py --device GPU --n 50              (50 หน้า = ชุดที่ 1 เต็ม)
 
 ลบทิ้งทั้งหมด: ลบโฟลเดอร์ openvino_test (uv ที่ติดตั้งอยู่ใน %USERPROFILE%\.local\bin)
+
+============================================================
+ส่วนที่ 2: รัน pipeline เต็ม (แบบเดียวกับ Colab) บน GPU ในตัว แล้วคิดคะแนน
+============================================================
+ต่างจาก Colab แค่ส่วนอ่านข้อความ (VLM) ที่ย้ายมารันบน OpenVINO/Intel GPU
+ส่วนตรวจ layout, การตัดกล่อง, คำสั่ง, ความละเอียดภาพ, รูปแบบ markdown = เหมือน Colab
+ใช้โมเดลแบบไม่บีบอัด (fp) + GPU precision f16 (เปลี่ยนเป็น f32 ได้: ใกล้ T4 กว่าแต่ช้ากว่า)
+
+1. git pull   (ดึงไฟล์ใหม่)
+2. ดับเบิลคลิก setup_pipeline.bat   (ครั้งเดียว: Paddle CPU + PaddleOCR ~1 GB)
+3. ดับเบิลคลิก run_pipeline_pilot.bat  (20 หน้าแรก, ครั้งแรกโหลด dataset 1.4 GB)
+   → ส่งบรรทัดท้ายๆ (avg s/page) กลับมาก่อน ค่อยตัดสินใจรันทั้งหมด
+4. ดับเบิลคลิก run_pipeline_all.bat   (1651 หน้า — ปิดกลางทางได้ รันใหม่จะทำต่อ)
+5. ดับเบิลคลิก eval.bat               (คิดคะแนนแบบไม่มี CDM เทียบกับ 93.94)
+
+ผลอยู่ใน pipeline_results\paddleocr_vl15_ov_gpu_f16_fp\ (หน้าละ .md) และ score_*.json
+ถ้าจะลอง f32: .venv-paddle\Scripts\python.exe run_pipeline.py --precision f32 --limit 20
