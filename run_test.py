@@ -59,7 +59,9 @@ def main():
     t_load = time.perf_counter()
     model = OVPaddleOCRVLForCausalLM(core=core, ov_model_path=str(OV_DIR), device=args.device,
                                      llm_int4_compress=False, llm_int8_compress=(args.llm == "int8"),
-                                     vision_int8_quant=False, llm_int8_quant=(args.llm == "int8"),
+                                     vision_int8_quant=False,
+                                     # llm_int8_quant adds DYNAMIC_QUANTIZATION_GROUP_SIZE, which the NPU plugin rejects
+                                     llm_int8_quant=(args.llm == "int8" and args.device != "NPU"),
                                      llm_infer_list=[], vision_infer=[])
     print(f"model load/compile: {time.perf_counter() - t_load:.1f}s")
     gen = {"bos_token_id": model.tokenizer.bos_token_id, "eos_token_id": model.tokenizer.eos_token_id,
