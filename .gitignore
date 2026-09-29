@@ -1,0 +1,9 @@
+# created by setup.bat / scripts — large or machine-specific
+.venv/
+models/
+ov_helper/
+omnidocbench_images/
+_hf/
+results/
+__pycache__/
+*.pyc
