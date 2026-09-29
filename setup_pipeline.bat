@@ -14,7 +14,7 @@ echo [setup_pipeline] installing paddlepaddle CPU + paddleocr 3.7.0 ...
 uv pip install --python .venv-paddle\Scripts\python.exe paddlepaddle==3.3.1 "paddleocr[doc-parser]==3.7.0" openai huggingface_hub || goto :err
 .venv-paddle\Scripts\python.exe -c "import paddle, paddleocr; print('paddle', paddle.__version__, 'paddleocr', paddleocr.__version__)" || goto :err
 echo [setup_pipeline] converting uncompressed model (once, several minutes) ...
-.venvScriptspython.exe prepare_model.py || goto :err
+.venv\Scripts\python.exe prepare_model.py || goto :err
 echo.
 echo [setup_pipeline] DONE. Next: run_pipeline_pilot.bat
 pause
