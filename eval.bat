@@ -2,6 +2,8 @@
 rem Score the pipeline outputs with OmniDocBench v1.6 @ 7279eea (Edit_dist + TEDS, no CDM).
 cd /d "%~dp0"
 set PYTHONIOENCODING=utf-8
+rem OmniDocBench opens files without encoding=; Windows defaults to cp1252 -> force UTF-8 mode
+set PYTHONUTF8=1
 set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 
 if not exist OmniDocBench\.git (
