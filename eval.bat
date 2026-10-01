@@ -14,7 +14,7 @@ if not exist .venv-eval\Scripts\python.exe (
     uv venv --python 3.10 .venv-eval || goto :err
     uv pip install --python .venv-eval\Scripts\python.exe -e OmniDocBench || goto :err
 )
-.venv-eval\Scripts\python.exe eval_pipeline.py %1 || goto :err
+.venv-eval\Scripts\python.exe eval_pipeline.py %* || goto :err
 pause
 exit /b 0
 

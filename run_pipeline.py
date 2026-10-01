@@ -74,15 +74,20 @@ def main():
     ap.add_argument("--llm", choices=["fp", "int8"], default="fp")
     ap.add_argument("--limit", type=int, default=0, help="only first N pages (pilot)")
     ap.add_argument("--port", type=int, default=8111)
+    ap.add_argument("--pages", default="", help="text file with image names (one per line) to run only those pages")
+    ap.add_argument("--tag", default="", help="suffix for the output folder name")
     args = ap.parse_args()
 
     ensure_dataset()
-    run = f"paddleocr_vl15_ov_{args.device.lower()}_{args.precision}_{args.llm}"
+    run = f"paddleocr_vl15_ov_{args.device.lower()}_{args.precision}_{args.llm}" + (f"_{args.tag}" if args.tag else "")
     out = ROOT / "pipeline_results" / run
     out.mkdir(parents=True, exist_ok=True)
     images = sorted(p for p in (DATA / "images").iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
     if args.limit:
         images = images[: args.limit]
+    if args.pages:
+        keep = {l.strip() for l in open(args.pages, encoding="utf-8") if l.strip()}
+        images = [p for p in images if p.name in keep]
     todo = [p for p in images if not (out / f"{p.stem}.md").exists()]
     print(f"[run] {run}: {len(images)} pages | done {len(images) - len(todo)} | todo {len(todo)}")
     if not todo:

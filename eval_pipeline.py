@@ -14,15 +14,29 @@ PUB_NO_CDM = ((1 - PUB["text_edit"]) * 100 + PUB["table_teds"]) / 2      # 93.94
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("run", nargs="?", default="")
+    ap.add_argument("--pages", default="", help="score only the pages listed in this file (subset GT)")
+    args = ap.parse_args()
     runs = sorted(p.name for p in (ROOT / "pipeline_results").iterdir() if p.is_dir())
-    run = sys.argv[1] if len(sys.argv) > 1 else runs[0]
+    run = args.run or runs[0]
     pred = ROOT / "pipeline_results" / run
-    n = sum(1 for f in pred.iterdir() if f.suffix == ".md")
-    print(f"[eval] {run}: {n}/1651 predictions")
-    if n < 1651:
+    gt_path = ROOT / "omnidocbench_v1.6" / "OmniDocBench.json"
+    if args.pages:   # same GT, filtered to the listed pages -> compare runs on identical pages
+        keep = {l.strip() for l in open(args.pages, encoding="utf-8") if l.strip()}
+        gt = [s for s in json.load(open(gt_path, encoding="utf-8")) if Path(s["page_info"]["image_path"]).name in keep]
+        gt_path = ROOT / f"gt_subset_{Path(args.pages).stem}.json"
+        gt_path.write_text(json.dumps(gt, ensure_ascii=False), encoding="utf-8")
+    total = len(json.load(open(gt_path, encoding="utf-8")))
+    have = {f.stem for f in pred.iterdir() if f.suffix == ".md"}
+    n = sum(1 for s in json.load(open(gt_path, encoding="utf-8")) if Path(s["page_info"]["image_path"]).stem in have)
+    print(f"[eval] {run}: {n}/{total} predictions" + (f" (subset {args.pages})" if args.pages else ""))
+    if n < total:
         print("  WARNING: missing pages are scored as EMPTY pages -> score will be lower")
+    tag = run + (f"__{Path(args.pages).stem}" if args.pages else "")
 
-    cfg = ROOT / f"cfg_{run}.yaml"
+    cfg = ROOT / f"cfg_{tag}.yaml"
     cfg.write_text(f"""end2end_eval:
   metrics:
     text_block:
@@ -37,7 +51,7 @@ def main():
   dataset:
     dataset_name: end2end_dataset
     ground_truth:
-      data_path: {(ROOT / 'omnidocbench_v1.6' / 'OmniDocBench.json').as_posix()}
+      data_path: {gt_path.as_posix()}
     prediction:
       data_path: {pred.as_posix()}
     match_method: quick_match
@@ -61,12 +75,12 @@ def main():
             ("Table TEDS", teds, PUB["table_teds"]),
             ("Table TEDS-S", m["table_TEDS_structure_only"]["notebook_value"], PUB["table_teds_s"]),
             ("Read Order Edit (lower=better)", m["reading_order_Edit_dist"]["notebook_value"], PUB["read_order_edit"])]
-    print(f"\n===== SCORE {run} =====")
+    print(f"\n===== SCORE {tag} =====")
     print(f"{'metric':32s} {'ours':>9s} {'published':>9s} {'diff':>8s}")
     for name, o, p in rows:
         print(f"{name:32s} {o:9.4f} {p:9.4f} {o - p:+8.4f}")
-    out = ROOT / "pipeline_results" / f"score_{run}.json"
-    out.write_text(json.dumps({"run": run, "pages": n, "rows": rows}, indent=1), encoding="utf-8")
+    out = ROOT / "pipeline_results" / f"score_{tag}.json"
+    out.write_text(json.dumps({"run": run, "subset": args.pages, "pages": n, "rows": rows}, indent=1), encoding="utf-8")
     print(f"saved: {out}")
 
 
